@@ -85,5 +85,35 @@ class FileSearch
         }
         return false;
     }
+    /**
+     * 读取固定行数的文本
+     * @param  int $id    行数
+     * @return [type]     [description]
+     */
+    public function getLine($key)
+    {
+        $ret = array();
+        if (!$this->fd) {
+            $this->fd = fopen($this->formatFile, "rb");
+        }
+        if(!is_array($key)) {
+            $key = array($key);
+        }
+        foreach ($key as $v) {
+            if($v < 100) {
+                continue;
+            }
+            fseek($this->fd, ($v - 1) * $this->maxLength);
+            $info = unpack("a*", fread($this->fd, $this->maxLength))['1'];
+            $ret[$v] = trim(strstr($info, "\t"));
+        }
+        return $ret;
+    }
+    public function __destruct()
+    {
+        if ($this->fd) {
+            fclose($this->fd);
+        }
+    }
 }
 
