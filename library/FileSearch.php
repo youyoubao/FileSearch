@@ -52,8 +52,8 @@ class FileSearch
         echo "\n start reformat file $this->filename ..";
         while (!feof($readfd)) {
             $line = fgets($readfd, 8192);
-	    $id = explode("\t", $line)['0'];
- 	    fseek($writefd, ($id - 1) * $this->maxLength);	    
+            $id = explode("\t", $line)['0'];
+            fseek($writefd, ($id - 1) * $this->maxLength);	    
             fwrite($writefd, pack("a".$this->maxLength, $line));
         }
         echo "\n reformat ok\n";
@@ -75,7 +75,6 @@ class FileSearch
 
         while ($left <= $right) {
             $middle = intval(($right + $left)/2);
-            echo "\n get line: ".$middle;
             fseek($fd, ($middle) * $this->maxLength);
             $info = unpack("a*", fread($fd, $this->maxLength))['1'];
             $lineinfo = explode("\t", $info, 2);
@@ -84,9 +83,11 @@ class FileSearch
             } elseif ($lineinfo['0'] < $key) {
                 $left = $middle + 1;
             } else {
+                fclose($fd);
                 return $lineinfo['1'];
             }
         }
+        fclose($fd);
         return false;
     }
     /**
@@ -97,9 +98,7 @@ class FileSearch
     public function getLine($key)
     {
         $ret = array();
-        if (!$this->fd) {
-            $this->fd = fopen($this->formatFile, "rb");
-        }
+        $fd = fopen($this->formatFile, "rb");
         if(!is_array($key)) {
             $key = array($key);
         }
@@ -107,16 +106,11 @@ class FileSearch
             if($v < 100) {
                 continue;
             }
-            fseek($this->fd, ($v - 1) * $this->maxLength);
-            $info = unpack("a*", fread($this->fd, $this->maxLength))['1'];
+            fseek($fd, ($v - 1) * $this->maxLength);
+            $info = unpack("a*", fread($fd, $this->maxLength))['1'];
             $ret[$v] = trim(strstr($info, "\t"));
         }
+        fclose($fd);
         return $ret;
-    }
-    public function __destruct()
-    {
-        if ($this->fd) {
-            fclose($this->fd);
-        }
     }
 }
