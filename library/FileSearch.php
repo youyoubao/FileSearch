@@ -13,6 +13,7 @@ class FileSearch
     private $maxLength;  //源文件中单行的最大长度(按字节算)
     private $sorted;     //源文件是否已经排好序
     private $formatFile; //重新格式化存储的文件名
+    private $fd;
     
     /**
      * 初始化
@@ -27,7 +28,7 @@ class FileSearch
         $this->filename = $filename;
         $this->maxLength = $maxLength;
         $this->sorted = $sorted;
-        $this->formatFile = dirname(__FILE__)."/filecache/".md5($this->filename);
+        $this->formatFile = dirname($this->filename)."/filecache/".md5($this->filename);
 
         if ($forceReForm || !file_exists($this->formatFile)) {
             $this->formatFile();
@@ -51,6 +52,8 @@ class FileSearch
         echo "\n start reformat file $this->filename ..";
         while (!feof($readfd)) {
             $line = fgets($readfd, 8192);
+	    $id = explode("\t", $line)['0'];
+ 	    fseek($writefd, ($id - 1) * $this->maxLength);	    
             fwrite($writefd, pack("a".$this->maxLength, $line));
         }
         echo "\n reformat ok\n";
@@ -72,6 +75,7 @@ class FileSearch
 
         while ($left <= $right) {
             $middle = intval(($right + $left)/2);
+            echo "\n get line: ".$middle;
             fseek($fd, ($middle) * $this->maxLength);
             $info = unpack("a*", fread($fd, $this->maxLength))['1'];
             $lineinfo = explode("\t", $info, 2);
@@ -116,4 +120,3 @@ class FileSearch
         }
     }
 }
-
